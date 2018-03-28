@@ -1,0 +1,123 @@
+
+#----------------------------- Global Properties ----------------------------#
+
+/outputDir:bin/$(Platform)
+/intermediateDir:obj/$(Platform)
+/platform:Windows
+/config:
+/profile:Reach
+/compress:False
+
+#-------------------------------- References --------------------------------#
+
+/reference:..\..\..\TexturePackerJsonPipeline\TexturePackerJsonPipeline\bin\Debug\TexturePackerJsonPipeline.dll
+/reference:..\..\packages\MonoGame.Extended.Animations.1.0.617\lib\portable-net45+win8+wpa81\MonoGame.Extended.Animations.dll
+/reference:..\..\packages\MonoGame.Extended.Content.Pipeline.1.0.617\tools\MonoGame.Extended.Content.Pipeline.dll
+
+#---------------------------------- Content ---------------------------------#
+
+#begin Buttons/bar.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Buttons/bar.png
+
+#begin Fonts/SenseiHead/SenseiHead.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:Fonts/SenseiHead/SenseiHead.fnt
+
+#begin Fonts/SenseiHead/SenseiHead_0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Fonts/SenseiHead/SenseiHead_0.png
+
+#begin Fonts/SunnBody/SunnBody.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:Fonts/SunnBody/SunnBody.fnt
+
+#begin Fonts/SunnBody/SunnBody_0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Fonts/SunnBody/SunnBody_0.png
+
+#begin Music/Shenyang.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/Shenyang.mp3
+
+#begin Sounds/KunaiImpact.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/KunaiImpact.mp3
+
+#begin Sounds/KunaiThrow.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/KunaiThrow.mp3
+
+#begin NinjaGirl/Kunai.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:NinjaGirl/Kunai.png
+
+#begin Backgrounds/Forest.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Backgrounds/Forest.png
+
+#begin NinjaGirl/NGSprites.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:NinjaGirl/NGSprites.png
+
+#begin NinjaGirl/NGTPFile.json
+/importer:TexturePackerJsonImporter
+/processor:TexturePackerProcessor
+/build:NinjaGirl/NGTPFile.json
+
