@@ -25,7 +25,13 @@ namespace Mori
         private Controls controls = new Controls();
         private string action = "Idle__";
         private KeyboardState oldKeyboardState;
-        private bool canAttack = true;
+        private bool isActing = false;
+        private bool canTurn = true;
+        private bool isJumping = false;
+        private bool isRunning = false;
+        private bool isClimbing = false;
+        enum Direction { Right, Left };
+        private Direction direction = Direction.Right;
 
         public Character(Game1 Game, string directory, string prefix, string[] animationStrs) {
             this.directory = directory;
@@ -43,27 +49,120 @@ namespace Mori
 
         }
 
+        public bool IsNewKeyDown(Keys key) {
+            return Keyboard.GetState().IsKeyDown(key) && oldKeyboardState.IsKeyUp(key);
+        }
+
         public void Update(GameTime gameTime) {
             KeyboardState keyboardState = Keyboard.GetState();
 
-            if (keyboardState.IsKeyDown(controls.AttackKey) && canAttack) {
-                action = "Attack__";
-                frame = 0;
-                timer = speed;
-                canAttack = false;
+            if (canTurn) {
+                if (keyboardState.IsKeyDown(controls.RightKey)) {
+                    direction = Direction.Right;
+                } else if (keyboardState.IsKeyDown(controls.LeftKey)) {
+                    direction = Direction.Left;
+                }
+            }
+
+            if (isClimbing) {
+                if (keyboardState.IsKeyDown(controls.SlideKey)) {
+                    isClimbing = false;
+                    action = "Idle__";
+                    frame = 0;
+                    timer = speed;
+                }
+            } else if (keyboardState.IsKeyDown(controls.ClimbKey)) {
+                if (!isClimbing) {
+                    isClimbing = true;
+                    action = "Climb_";
+                    frame = 0;
+                    timer = speed;
+                }
+            } else if (!isJumping) {
+                if (IsNewKeyDown(controls.JumpKey)) {
+                    action = "Jump__";
+                    frame = 0;
+                    timer = speed;
+                    isJumping = true;
+                } else if (!isActing) {
+                    if (IsNewKeyDown(controls.AttackKey)) {
+                        action = "Attack__";
+                        frame = 0;
+                        timer = speed;
+                        isActing = true;
+                        canTurn = false;
+                    } else if (IsNewKeyDown(controls.ThrowKey)) {
+                        action = "Throw__";
+                        frame = 0;
+                        timer = speed;
+                        isActing = true;
+                        canTurn = false;
+                    } else if (IsNewKeyDown(controls.SlideKey)) {
+                        action = "Slide__";
+                        frame = 0;
+                        timer = speed;
+                        isActing = true;
+                        canTurn = false;
+                    } else if (keyboardState.IsKeyDown(controls.RightKey)
+                        || keyboardState.IsKeyDown(controls.LeftKey)) {
+                        if (!isRunning) {
+                            action = "Run__";
+                            frame = 0;
+                            isRunning = true;
+                            timer = speed;
+                        }
+                    } else if (!isClimbing) {
+                        if (action != "Idle__") {
+                            action = "Idle__";
+                            frame = 0;
+                            timer = speed;
+                            isRunning = false;
+                        }
+                    }
+                }
+            } else {
+                if (!isActing) {
+                    if (IsNewKeyDown(controls.AttackKey)) {
+                        action = "Jump_Attack__";
+                        frame = 0;
+                        timer = speed;
+                        isActing = true;
+                        canTurn = false;
+                    } else if (IsNewKeyDown(controls.ThrowKey)) {
+                        action = "Jump_Throw__";
+                        frame = 0;
+                        timer = speed;
+                        isActing = true;
+                        canTurn = false;
+                    } else if (IsNewKeyDown(controls.JumpKey)) {
+                        action = "Glide_";
+                        frame = 0;
+                        timer = speed;
+                        isActing = true;
+                    }
+                }
             }
 
             timer -= gameTime.ElapsedGameTime.TotalSeconds;
 
             if (timer < 0) {
-                frame++;
+                if (!isClimbing || keyboardState.IsKeyDown(controls.ClimbKey)) {
+                    frame++;
+                    Console.WriteLine(frame);
+                }
                 if (frame > 9) {
-                    action = "Idle__";
                     frame = 0;
-                    canAttack = true;
+                    if (isActing || isJumping) {
+                        action = "Idle__";
+                        isActing = false;
+                        isJumping = false;
+                        canTurn = true;
+                    }
                 }
                 timer = speed;
             }
+
+            oldKeyboardState = keyboardState;
         }
 
         public void ShowcaseSprite(SpriteBatch spriteBatch, GraphicsDeviceManager graphics, string prefix) {
