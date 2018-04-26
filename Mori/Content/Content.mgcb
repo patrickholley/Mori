@@ -10,8 +10,8 @@
 
 #-------------------------------- References --------------------------------#
 
-/reference:..\..\..\TexturePackerJsonPipeline\TexturePackerJsonPipeline\bin\Debug\TexturePackerJsonPipeline.dll
 /reference:..\..\packages\MonoGame.Extended.Animations.1.0.617\lib\portable-net45+win8+wpa81\MonoGame.Extended.Animations.dll
+/reference:..\..\..\TexturePackerJsonPipeline\TexturePackerJsonPipeline\bin\Debug\TexturePackerJsonPipeline.dll
 /reference:..\..\packages\MonoGame.Extended.Content.Pipeline.1.0.617\tools\MonoGame.Extended.Content.Pipeline.dll
 
 #---------------------------------- Content ---------------------------------#

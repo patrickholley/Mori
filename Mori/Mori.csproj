@@ -65,8 +65,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
-    <Reference Include="TexturePackerAtlas, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\TexturePackerAtlas.1.0.0\lib\net45\TexturePackerAtlas.dll</HintPath>
+    <Reference Include="TexturePackerAtlas, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\TexturePackerAtlas.1.1.2\lib\net45\TexturePackerAtlas.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

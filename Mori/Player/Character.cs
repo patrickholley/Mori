@@ -3,19 +3,19 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.TextureAtlases;
+using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
 using TexturePackerAtlas;
 
 namespace Mori
 {
-    class Character : IGraphic
-    {
+    class Character : IGraphic {
         private Game1 Game;
         private ContentManager Content;
         private string directory;
         private string prefix;
-        private Vector2 position = new Vector2(100, 540);
+        private Vector2 position = new Vector2(500, 500);
         private Dictionary<string, TextureRegion2D[]> animations = new Dictionary<string, TextureRegion2D[]>();
         private string[] animationStrs;
         private byte frame = 0;
@@ -32,6 +32,19 @@ namespace Mori
         private bool isClimbing = false;
         enum Direction { Right, Left };
         private Direction direction = Direction.Right;
+        private int characterWidth = 130;
+        private int characterHeight = 225;
+        private Dictionary<string, int> animationYOffsets = new Dictionary<string, int>() {
+            { "Idle__", 0 },
+            { "Climb_", 0 },
+            { "Jump__", 0 },
+            { "Attack__", 23 },
+            { "Throw__", 2 },
+            { "Slide__", 0 },
+            { "Jump_Attack__", 0 },
+            { "Jump_Throw__", 0 },
+            { "Glide_", 0 }
+        };
 
         public Character(Game1 Game, string directory, string prefix, string[] animationStrs) {
             this.directory = directory;
@@ -72,12 +85,11 @@ namespace Mori
                     timer = speed;
                 }
             } else if (keyboardState.IsKeyDown(controls.ClimbKey)) {
-                if (!isClimbing) {
-                    isClimbing = true;
-                    action = "Climb_";
-                    frame = 0;
-                    timer = speed;
-                }
+                isClimbing = true;
+                isJumping = false;
+                action = "Climb_";
+                frame = 0;
+                timer = speed;
             } else if (!isJumping) {
                 if (IsNewKeyDown(controls.JumpKey)) {
                     action = "Jump__";
@@ -111,13 +123,11 @@ namespace Mori
                             isRunning = true;
                             timer = speed;
                         }
-                    } else if (!isClimbing) {
-                        if (action != "Idle__") {
-                            action = "Idle__";
-                            frame = 0;
-                            timer = speed;
-                            isRunning = false;
-                        }
+                    } else if (!isClimbing && action != "Idle__") {
+                        action = "Idle__";
+                        frame = 0;
+                        timer = speed;
+                        isRunning = false;
                     }
                 }
             } else {
@@ -148,7 +158,6 @@ namespace Mori
             if (timer < 0) {
                 if (!isClimbing || keyboardState.IsKeyDown(controls.ClimbKey)) {
                     frame++;
-                    Console.WriteLine(frame);
                 }
                 if (frame > 9) {
                     frame = 0;
@@ -165,53 +174,65 @@ namespace Mori
             oldKeyboardState = keyboardState;
         }
 
-        public void ShowcaseSprite(SpriteBatch spriteBatch, GraphicsDeviceManager graphics, string prefix) {
+        public void AnimateSprite(SpriteBatch spriteBatch, GraphicsDeviceManager graphics, string prefix) {
             TexturePackerRegion region = NGTPFile.getRegion($"{prefix}00{frame}");
             TexturePackerRectangle TPSource = region.SourceRectangle;
             TexturePackerRectangle TPFrame = region.Frame;
-            Vector2 destinationRectangle;
+
+            float rotation = 0f;
+            int sourceWidth = TPFrame.Width;
+            int sourceHeight = TPFrame.Height;
+            float destinationX = position.X + TPSource.X;
+            float destinationY = position.Y - (region.SourceSize.Height - TPSource.Height - TPSource.Y - animationYOffsets[action]);
+            SpriteEffects faceDirection = SpriteEffects.None;
+
+            if (direction == Direction.Left) {
+                destinationX = position.X - TPSource.X - TPSource.Width + characterWidth;
+                faceDirection = SpriteEffects.FlipHorizontally;
+            }
+
+            if (region.IsRotated) {
+                if (direction == Direction.Left) faceDirection = SpriteEffects.FlipVertically;
+                rotation = -(float)Math.PI / 2;
+                sourceWidth = TPFrame.Height;
+                sourceHeight = TPFrame.Width;
+                destinationX += TPFrame.Width;
+            }
+
 
             Rectangle sourceRectangle = new Rectangle(
                 TPFrame.X,
                 TPFrame.Y,
-                TPFrame.Width,
-                TPFrame.Height
+                sourceWidth,
+                sourceHeight
             );
 
-            Vector2 currentPosition = new Vector2(position.X, position.Y);
+            Vector2 destinationPosition = new Vector2(
+                destinationX,
+                destinationY
+            );
 
-            float rotation;
-            if (region.IsRotated) {
-                rotation = (float)Math.PI * 1.5f;
-                destinationRectangle = new Vector2(
-                    currentPosition.X + TPSource.X,
-                    currentPosition.Y + TPSource.Y + TPFrame.Height
-                );
-                sourceRectangle.Width = TPFrame.Height;
-                sourceRectangle.Height = TPFrame.Width;
-            } else {
-                destinationRectangle = new Vector2(
-                    currentPosition.X + TPSource.X,
-                    currentPosition.Y + TPSource.Y
-                );
-                rotation = 0f;
-            }
+            Vector2 origin = new Vector2(
+                sourceRectangle.Width * region.PivotPoint.X,
+                sourceRectangle.Height * region.PivotPoint.Y
+            );
 
             spriteBatch.Draw(
                 NGTPFile.Texture,
-                destinationRectangle,
+                destinationPosition,
                 sourceRectangle,
                 Color.White,
                 rotation,
-                new Vector2(0, 0),
+                origin,
                 1f,
-                SpriteEffects.None,
+                faceDirection,
                 0f
             );
         }
 
         public void Draw(SpriteBatch spriteBatch, GraphicsDeviceManager graphics) {
-            ShowcaseSprite(spriteBatch, graphics, action);
+            AnimateSprite(spriteBatch, graphics, action);
+            ShapeExtensions.DrawLine(spriteBatch, new Vector2(0, position.Y), new Vector2(1920, position.Y), Color.Black);
         }
     }
 }
