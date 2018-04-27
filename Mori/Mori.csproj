@@ -44,6 +44,7 @@
     <Compile Include="Game1.cs" />
     <Compile Include="Interfaces\IGraphic.cs" />
     <Compile Include="Menus\MainMenu.cs" />
+    <Compile Include="Player\ActStatus.cs" />
     <Compile Include="Player\Character.cs" />
     <Compile Include="Player\Controls.cs" />
     <Compile Include="Program.cs" />

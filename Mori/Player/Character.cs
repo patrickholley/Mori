@@ -25,25 +25,22 @@ namespace Mori
         private Controls controls = new Controls();
         private string action = "Idle__";
         private KeyboardState oldKeyboardState;
-        private bool isActing = false;
-        private bool canTurn = true;
-        private bool isJumping = false;
-        private bool isRunning = false;
-        private bool isClimbing = false;
         enum Direction { Right, Left };
         private Direction direction = Direction.Right;
         private int characterWidth = 130;
         private int characterHeight = 225;
-        private Dictionary<string, int> animationYOffsets = new Dictionary<string, int>() {
-            { "Idle__", 0 },
-            { "Climb_", 0 },
-            { "Jump__", 0 },
-            { "Attack__", 23 },
-            { "Throw__", 2 },
-            { "Slide__", 0 },
-            { "Jump_Attack__", 0 },
-            { "Jump_Throw__", 0 },
-            { "Glide_", 0 }
+        private ActStatus actStatus = new ActStatus(false, false, false, false, 0, 0);
+        private Dictionary<string, ActStatus> actStatuses = new Dictionary<string, ActStatus>() {
+            { "Attack__", new ActStatus(IsActing: true, IsClimbing: false, IsJumping: false, IsRunning: false, XOffset: 0, YOffset: 23) },
+            { "Climb_", new ActStatus(false, true, false, false, 0, 0) },
+            { "Glide_", new ActStatus(false, false, false, false, 0, 0) },
+            { "Idle__", new ActStatus(false, false, false, false, 0, 0) },
+            { "Jump__", new ActStatus(false, false, true, false, 0, 0) },
+            { "Jump_Attack__", new ActStatus(true, false, true, false, 0, 0) },
+            { "Jump_Throw__", new ActStatus(true, false, true, false, 0, 0) },
+            { "Run__", new ActStatus(false, false, false, true, 0, 0) },
+            { "Slide__", new ActStatus(true, false, false, false, 0, 0) },
+            { "Throw__", new ActStatus(true, false, false, false, 0, 2) },
         };
 
         public Character(Game1 Game, string directory, string prefix, string[] animationStrs) {
@@ -58,18 +55,23 @@ namespace Mori
             NGTPFile = Content.Load<TexturePackerAtlas.TexturePackerAtlas>("NinjaGirl/NGTPFile");
         }
 
-        public void UnloadContent() {
-
-        }
+        public void UnloadContent() {}
 
         public bool IsNewKeyDown(Keys key) {
             return Keyboard.GetState().IsKeyDown(key) && oldKeyboardState.IsKeyUp(key);
         }
 
+        private void UpdateAction(string action) {
+            this.action = action;
+            actStatus = actStatuses[action];
+            frame = 0;
+            timer = speed;
+        }
+
         public void Update(GameTime gameTime) {
             KeyboardState keyboardState = Keyboard.GetState();
 
-            if (canTurn) {
+            if (!actStatus.IsActing) {
                 if (keyboardState.IsKeyDown(controls.RightKey)) {
                     direction = Direction.Right;
                 } else if (keyboardState.IsKeyDown(controls.LeftKey)) {
@@ -77,96 +79,47 @@ namespace Mori
                 }
             }
 
-            if (isClimbing) {
-                if (keyboardState.IsKeyDown(controls.SlideKey)) {
-                    isClimbing = false;
-                    action = "Idle__";
-                    frame = 0;
-                    timer = speed;
-                }
-            } else if (keyboardState.IsKeyDown(controls.ClimbKey)) {
-                isClimbing = true;
-                isJumping = false;
-                action = "Climb_";
-                frame = 0;
-                timer = speed;
-            } else if (!isJumping) {
-                if (IsNewKeyDown(controls.JumpKey)) {
-                    action = "Jump__";
-                    frame = 0;
-                    timer = speed;
-                    isJumping = true;
-                } else if (!isActing) {
-                    if (IsNewKeyDown(controls.AttackKey)) {
-                        action = "Attack__";
-                        frame = 0;
-                        timer = speed;
-                        isActing = true;
-                        canTurn = false;
-                    } else if (IsNewKeyDown(controls.ThrowKey)) {
-                        action = "Throw__";
-                        frame = 0;
-                        timer = speed;
-                        isActing = true;
-                        canTurn = false;
-                    } else if (IsNewKeyDown(controls.SlideKey)) {
-                        action = "Slide__";
-                        frame = 0;
-                        timer = speed;
-                        isActing = true;
-                        canTurn = false;
-                    } else if (keyboardState.IsKeyDown(controls.RightKey)
+            if (actStatus.IsClimbing) {
+                if (keyboardState.IsKeyDown(controls.SlideKey))
+                    UpdateAction("Idle__");
+            } else if (keyboardState.IsKeyDown(controls.ClimbKey))
+                UpdateAction("Climb_");
+            else if (!actStatus.IsJumping) {
+                if (IsNewKeyDown(controls.JumpKey))
+                    UpdateAction("Jump__");
+                else if (!actStatus.IsActing) {
+                    if (IsNewKeyDown(controls.AttackKey))
+                        UpdateAction("Attack__");
+                    else if (IsNewKeyDown(controls.ThrowKey))
+                        UpdateAction("Throw__");
+                    else if (IsNewKeyDown(controls.SlideKey))
+                        UpdateAction("Slide__");
+                    else if (keyboardState.IsKeyDown(controls.RightKey)
                         || keyboardState.IsKeyDown(controls.LeftKey)) {
-                        if (!isRunning) {
-                            action = "Run__";
-                            frame = 0;
-                            isRunning = true;
-                            timer = speed;
-                        }
-                    } else if (!isClimbing && action != "Idle__") {
-                        action = "Idle__";
-                        frame = 0;
-                        timer = speed;
-                        isRunning = false;
-                    }
+                        if (!actStatus.IsRunning)
+                            UpdateAction("Run__");
+                    } else if (!actStatus.IsClimbing && action != "Idle__")
+                        UpdateAction("Idle__");
                 }
-            } else {
-                if (!isActing) {
-                    if (IsNewKeyDown(controls.AttackKey)) {
-                        action = "Jump_Attack__";
-                        frame = 0;
-                        timer = speed;
-                        isActing = true;
-                        canTurn = false;
-                    } else if (IsNewKeyDown(controls.ThrowKey)) {
-                        action = "Jump_Throw__";
-                        frame = 0;
-                        timer = speed;
-                        isActing = true;
-                        canTurn = false;
-                    } else if (IsNewKeyDown(controls.JumpKey)) {
-                        action = "Glide_";
-                        frame = 0;
-                        timer = speed;
-                        isActing = true;
-                    }
-                }
+            } else if (!actStatus.IsActing) {
+                if (IsNewKeyDown(controls.AttackKey))
+                    UpdateAction("Jump_Attack__");
+                else if (IsNewKeyDown(controls.ThrowKey))
+                    UpdateAction("Jump_Throw__");
+                else if (IsNewKeyDown(controls.JumpKey))
+                    UpdateAction("Glide_");
             }
 
             timer -= gameTime.ElapsedGameTime.TotalSeconds;
 
             if (timer < 0) {
-                if (!isClimbing || keyboardState.IsKeyDown(controls.ClimbKey)) {
+                if (!actStatus.IsClimbing || keyboardState.IsKeyDown(controls.ClimbKey)) {
                     frame++;
                 }
                 if (frame > 9) {
                     frame = 0;
-                    if (isActing || isJumping) {
-                        action = "Idle__";
-                        isActing = false;
-                        isJumping = false;
-                        canTurn = true;
-                    }
+                    if (actStatus.IsActing || actStatus.IsJumping)
+                        UpdateAction("Idle__");
                 }
                 timer = speed;
             }
@@ -183,7 +136,7 @@ namespace Mori
             int sourceWidth = TPFrame.Width;
             int sourceHeight = TPFrame.Height;
             float destinationX = position.X + TPSource.X;
-            float destinationY = position.Y - (region.SourceSize.Height - TPSource.Height - TPSource.Y - animationYOffsets[action]);
+            float destinationY = position.Y - (region.SourceSize.Height - TPSource.Height - TPSource.Y - actStatus.YOffset);
             SpriteEffects faceDirection = SpriteEffects.None;
 
             if (direction == Direction.Left) {
