@@ -21,7 +21,7 @@ namespace Mori
         public Forest_1(Game1 Game) {
             this.Game = Game;
             Content = new ContentManager(this.Game.Services, "Content");
-            NinjaGirl = new Character(Game, "NinjaGirl", "NG", new string[] { "Attack" });
+            NinjaGirl = new Character(Game, "NinjaGirl", "NG");
         }
 
         public void LoadContent() {

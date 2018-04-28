@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended.TextureAtlases;
 using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
@@ -16,14 +15,14 @@ namespace Mori
         private string directory;
         private string prefix;
         private Vector2 position = new Vector2(500, 500);
-        private Dictionary<string, TextureRegion2D[]> animations = new Dictionary<string, TextureRegion2D[]>();
-        private string[] animationStrs;
-        private byte frame = 0;
-        private double speed = 0.06D;
-        private double timer = 0.06D;
+        private byte runSpeed = 25;
+        private byte jumpHeight = 25;
+        private byte frameNum = 0;
+        private double frameSpeed = 0.06D;
+        private double frameTimer = 0.06D;
         private TexturePackerAtlas.TexturePackerAtlas NGTPFile;
         private Controls controls = new Controls();
-        private string action = "Idle__";
+        private string action = "Idle";
         private KeyboardState oldKeyboardState;
         enum Direction { Right, Left };
         private Direction direction = Direction.Right;
@@ -32,27 +31,27 @@ namespace Mori
         private ActStatus actStatus = new ActStatus(false, false, 0, 0);
         private Dictionary<string, ActStatus> actStatuses = new Dictionary<string, ActStatus>() {
             { "Attack", new ActStatus(true, false, 0, 23) },
-            { "Climb", new ActStatus(false, false, 0, 0) },
-            { "Glide", new ActStatus(false, false, 0, 0) },
+            { "Climb", new ActStatus(false, false, 15, 0) },
+            { "Dead", new ActStatus(true, false, 0, 0) },
+            { "Glide", new ActStatus(true, false, 0, -10) },
             { "Idle", new ActStatus(false, false, 0, 0) },
             { "Jump", new ActStatus(false, true, 0, 0) },
-            { "JumpAttack", new ActStatus(true, true, 0, 0) },
-            { "JumpThrow", new ActStatus(true, true, 0, 0) },
-            { "Run", new ActStatus(false, false, 0, 0) },
-            { "Slide", new ActStatus(true, false, 0, 0) },
-            { "Throw", new ActStatus(true, false, 0, 2) },
+            { "JumpAttack", new ActStatus(true, true, 0, 20) },
+            { "JumpThrow", new ActStatus(true, true, 15, -20) },
+            { "Run", new ActStatus(false, false, 0, 12) },
+            { "Slide", new ActStatus(true, false, 0, 12) },
+            { "Throw", new ActStatus(true, false, 22, 2) },
         };
 
-        public Character(Game1 Game, string directory, string prefix, string[] animationStrs) {
+        public Character(Game1 Game, string directory, string prefix) {
             this.directory = directory;
             this.prefix = prefix;
-            this.animationStrs = animationStrs;
             this.Game = Game;
             Content = new ContentManager(this.Game.Services, "Content");
         }
 
         public void LoadContent() {
-            NGTPFile = Content.Load<TexturePackerAtlas.TexturePackerAtlas>("NinjaGirl/NGTPFile");
+            NGTPFile = Content.Load<TexturePackerAtlas.TexturePackerAtlas>($"{directory}/{prefix}TPFile");
         }
 
         public void UnloadContent() {}
@@ -64,8 +63,32 @@ namespace Mori
         private void UpdateAction(string action) {
             this.action = action;
             actStatus = actStatuses[action];
-            frame = 0;
-            timer = speed;
+            frameNum = 0;
+            frameTimer = frameSpeed;
+        }
+
+        private void UpdateActionAfterNotJumpingNorActing(KeyboardState keyboardState) {
+            if (IsNewKeyDown(controls.AttackKey))
+                UpdateAction("Attack");
+            else if (IsNewKeyDown(controls.ThrowKey))
+                UpdateAction("Throw");
+            else if (IsNewKeyDown(controls.SlideKey))
+                UpdateAction("Slide");
+            else if (keyboardState.IsKeyDown(controls.RightKey)
+                || keyboardState.IsKeyDown(controls.LeftKey)) {
+                if (action != "Run")
+                    UpdateAction("Run");
+            } else if (action != "Climb" && action != "Idle")
+                UpdateAction("Idle");
+        }
+
+        private void UpdateActionAfterNotActing(KeyboardState keyboardState) {
+            if (IsNewKeyDown(controls.AttackKey))
+                UpdateAction("JumpAttack");
+            else if (IsNewKeyDown(controls.ThrowKey))
+                UpdateAction("JumpThrow");
+            else if (IsNewKeyDown(controls.JumpKey))
+                UpdateAction("Glide");
         }
 
         public void Update(GameTime gameTime) {
@@ -88,59 +111,54 @@ namespace Mori
                 if (IsNewKeyDown(controls.JumpKey))
                     UpdateAction("Jump");
                 else if (!actStatus.IsActing) {
-                    if (IsNewKeyDown(controls.AttackKey))
-                        UpdateAction("Attack");
-                    else if (IsNewKeyDown(controls.ThrowKey))
-                        UpdateAction("Throw");
-                    else if (IsNewKeyDown(controls.SlideKey))
-                        UpdateAction("Slide");
-                    else if (keyboardState.IsKeyDown(controls.RightKey)
-                        || keyboardState.IsKeyDown(controls.LeftKey)) {
-                        if (action != "Run")
-                            UpdateAction("Run");
-                    } else if (action != "Climb" && action != "Idle")
-                        UpdateAction("Idle");
+                    UpdateActionAfterNotJumpingNorActing(keyboardState);
                 }
-            } else if (!actStatus.IsActing) {
-                if (IsNewKeyDown(controls.AttackKey))
-                    UpdateAction("JumpAttack");
-                else if (IsNewKeyDown(controls.ThrowKey))
-                    UpdateAction("JumpThrow");
-                else if (IsNewKeyDown(controls.JumpKey))
-                    UpdateAction("Glide");
+            } else if (!actStatus.IsActing || actStatus.IsJumping) {
+                UpdateActionAfterNotActing(keyboardState);
             }
 
-            timer -= gameTime.ElapsedGameTime.TotalSeconds;
+            frameTimer -= gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (timer < 0) {
+            if (frameTimer < 0) {
                 if (action != "Climb" || keyboardState.IsKeyDown(controls.ClimbKey)) {
-                    frame++;
+                    frameNum++;
                 }
-                if (frame > 9) {
-                    frame = 0;
+                if (frameNum > 9) {
+                    frameNum = 0;
                     if (actStatus.IsActing || actStatus.IsJumping)
                         UpdateAction("Idle");
                 }
-                timer = speed;
+                if (action == "JumpAttack") {
+                    Console.WriteLine('!');
+                };
+                if (!actStatus.IsActing || actStatus.IsJumping) {
+                    if (keyboardState.IsKeyDown(controls.RightKey)) position.X += runSpeed;
+                    else if (keyboardState.IsKeyDown(controls.LeftKey)) position.X -= runSpeed;
+                }
+                if (actStatus.IsJumping && frameNum < 5) {
+                    position.Y -= jumpHeight;
+                } else if (position.Y < 500) position.Y += jumpHeight;
+
+                frameTimer = frameSpeed;
             }
 
             oldKeyboardState = keyboardState;
         }
 
-        public void AnimateSprite(SpriteBatch spriteBatch, GraphicsDeviceManager graphics, string prefix) {
-            TexturePackerRegion region = NGTPFile.getRegion($"{prefix}_{frame}");
+        public void AnimateSprite(SpriteBatch spriteBatch, GraphicsDeviceManager graphics) {
+            TexturePackerRegion region = NGTPFile.getRegion($"{action}_{frameNum}");
             TexturePackerRectangle TPSource = region.SourceRectangle;
             TexturePackerRectangle TPFrame = region.Frame;
 
             float rotation = 0f;
             int sourceWidth = TPFrame.Width;
             int sourceHeight = TPFrame.Height;
-            float destinationX = position.X + TPSource.X;
+            float destinationX = position.X + TPSource.X - actStatus.XOffset;
             float destinationY = position.Y - (region.SourceSize.Height - TPSource.Height - TPSource.Y - actStatus.YOffset);
             SpriteEffects faceDirection = SpriteEffects.None;
 
             if (direction == Direction.Left) {
-                destinationX = position.X - TPSource.X - TPSource.Width + characterWidth;
+                destinationX = position.X - TPSource.X - TPSource.Width + characterWidth + actStatus.XOffset;
                 faceDirection = SpriteEffects.FlipHorizontally;
             }
 
@@ -184,8 +202,8 @@ namespace Mori
         }
 
         public void Draw(SpriteBatch spriteBatch, GraphicsDeviceManager graphics) {
-            AnimateSprite(spriteBatch, graphics, action);
-            ShapeExtensions.DrawLine(spriteBatch, new Vector2(0, position.Y), new Vector2(1920, position.Y), Color.Black);
+            AnimateSprite(spriteBatch, graphics);
+            ShapeExtensions.DrawLine(spriteBatch, new Vector2(0, 500), new Vector2(1920, 500), Color.Black);
         }
     }
 }
