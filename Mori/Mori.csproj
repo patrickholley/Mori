@@ -85,8 +85,6 @@
     <None Include="Content\Fonts\SunnBody\SunnBody_0.xnb" />
     <None Include="Content\Music\Shenyang.xnb" />
     <None Include="Content\NinjaGirl\Kunai.xnb" />
-    <None Include="Content\NinjaGirl\NGSprites.xnb" />
-    <None Include="Content\NinjaGirl\NGTPFile.xnb" />
     <None Include="Content\Sounds\KunaiImpact.xnb" />
     <None Include="Content\Sounds\KunaiThrow.xnb" />
     <None Include="packages.config" />

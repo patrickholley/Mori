@@ -29,18 +29,18 @@ namespace Mori
         private Direction direction = Direction.Right;
         private int characterWidth = 130;
         private int characterHeight = 225;
-        private ActStatus actStatus = new ActStatus(false, false, false, false, 0, 0);
+        private ActStatus actStatus = new ActStatus(false, false, 0, 0);
         private Dictionary<string, ActStatus> actStatuses = new Dictionary<string, ActStatus>() {
-            { "Attack__", new ActStatus(IsActing: true, IsClimbing: false, IsJumping: false, IsRunning: false, XOffset: 0, YOffset: 23) },
-            { "Climb_", new ActStatus(false, true, false, false, 0, 0) },
-            { "Glide_", new ActStatus(false, false, false, false, 0, 0) },
-            { "Idle__", new ActStatus(false, false, false, false, 0, 0) },
-            { "Jump__", new ActStatus(false, false, true, false, 0, 0) },
-            { "Jump_Attack__", new ActStatus(true, false, true, false, 0, 0) },
-            { "Jump_Throw__", new ActStatus(true, false, true, false, 0, 0) },
-            { "Run__", new ActStatus(false, false, false, true, 0, 0) },
-            { "Slide__", new ActStatus(true, false, false, false, 0, 0) },
-            { "Throw__", new ActStatus(true, false, false, false, 0, 2) },
+            { "Attack", new ActStatus(true, false, 0, 23) },
+            { "Climb", new ActStatus(false, false, 0, 0) },
+            { "Glide", new ActStatus(false, false, 0, 0) },
+            { "Idle", new ActStatus(false, false, 0, 0) },
+            { "Jump", new ActStatus(false, true, 0, 0) },
+            { "JumpAttack", new ActStatus(true, true, 0, 0) },
+            { "JumpThrow", new ActStatus(true, true, 0, 0) },
+            { "Run", new ActStatus(false, false, 0, 0) },
+            { "Slide", new ActStatus(true, false, 0, 0) },
+            { "Throw", new ActStatus(true, false, 0, 2) },
         };
 
         public Character(Game1 Game, string directory, string prefix, string[] animationStrs) {
@@ -79,47 +79,47 @@ namespace Mori
                 }
             }
 
-            if (actStatus.IsClimbing) {
+            if (action == "Climb") {
                 if (keyboardState.IsKeyDown(controls.SlideKey))
-                    UpdateAction("Idle__");
+                    UpdateAction("Idle");
             } else if (keyboardState.IsKeyDown(controls.ClimbKey))
-                UpdateAction("Climb_");
+                UpdateAction("Climb");
             else if (!actStatus.IsJumping) {
                 if (IsNewKeyDown(controls.JumpKey))
-                    UpdateAction("Jump__");
+                    UpdateAction("Jump");
                 else if (!actStatus.IsActing) {
                     if (IsNewKeyDown(controls.AttackKey))
-                        UpdateAction("Attack__");
+                        UpdateAction("Attack");
                     else if (IsNewKeyDown(controls.ThrowKey))
-                        UpdateAction("Throw__");
+                        UpdateAction("Throw");
                     else if (IsNewKeyDown(controls.SlideKey))
-                        UpdateAction("Slide__");
+                        UpdateAction("Slide");
                     else if (keyboardState.IsKeyDown(controls.RightKey)
                         || keyboardState.IsKeyDown(controls.LeftKey)) {
-                        if (!actStatus.IsRunning)
-                            UpdateAction("Run__");
-                    } else if (!actStatus.IsClimbing && action != "Idle__")
-                        UpdateAction("Idle__");
+                        if (action != "Run")
+                            UpdateAction("Run");
+                    } else if (action != "Climb" && action != "Idle")
+                        UpdateAction("Idle");
                 }
             } else if (!actStatus.IsActing) {
                 if (IsNewKeyDown(controls.AttackKey))
-                    UpdateAction("Jump_Attack__");
+                    UpdateAction("JumpAttack");
                 else if (IsNewKeyDown(controls.ThrowKey))
-                    UpdateAction("Jump_Throw__");
+                    UpdateAction("JumpThrow");
                 else if (IsNewKeyDown(controls.JumpKey))
-                    UpdateAction("Glide_");
+                    UpdateAction("Glide");
             }
 
             timer -= gameTime.ElapsedGameTime.TotalSeconds;
 
             if (timer < 0) {
-                if (!actStatus.IsClimbing || keyboardState.IsKeyDown(controls.ClimbKey)) {
+                if (action != "Climb" || keyboardState.IsKeyDown(controls.ClimbKey)) {
                     frame++;
                 }
                 if (frame > 9) {
                     frame = 0;
                     if (actStatus.IsActing || actStatus.IsJumping)
-                        UpdateAction("Idle__");
+                        UpdateAction("Idle");
                 }
                 timer = speed;
             }
@@ -128,7 +128,7 @@ namespace Mori
         }
 
         public void AnimateSprite(SpriteBatch spriteBatch, GraphicsDeviceManager graphics, string prefix) {
-            TexturePackerRegion region = NGTPFile.getRegion($"{prefix}00{frame}");
+            TexturePackerRegion region = NGTPFile.getRegion($"{prefix}_{frame}");
             TexturePackerRectangle TPSource = region.SourceRectangle;
             TexturePackerRectangle TPFrame = region.Frame;
 
